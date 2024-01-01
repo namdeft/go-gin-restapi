@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"gin-restapi/common"
+	"gin-restapi/middlewares"
+	"gin-restapi/token"
 	"log"
 	"net/http"
 	"os"
@@ -11,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"golang.org/x/crypto/bcrypt"
@@ -289,6 +292,11 @@ type RegisterInput struct {
 	Password string `json:"password" binding:"required"`
 }
 
+type LoginInput struct {
+	Email    string `json:"email" binding:"required"`
+	Password string `json:"password" binding:"required"`
+}
+
 type User struct {
 	ID       int    `json:"id"`
 	Name     string `json:"name"`
@@ -346,6 +354,64 @@ func register(c *gin.Context) {
 	c.JSON(http.StatusAccepted, common.SimpleSuccessResponse(input))
 }
 
+func GenerateToken(userId int) (string, error) {
+	claims := jwt.MapClaims{}
+	claims["authorized"] = true
+	claims["user_id"] = userId
+	claims["exp"] = time.Now().Add(time.Minute * 20).Unix()
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	return token.SignedString([]byte(os.Getenv("SECRET_KEY")))
+}
+
+func VerifyPassword(password, hashedPassword string) error {
+	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+}
+
+func LoginCheck(email string, password string) (string, error) {
+	var user User
+
+	if err := DB.Where("email = ?", email).Find(&user).Error; err != nil {
+		return "", nil
+	}
+
+	err := VerifyPassword(password, user.Password)
+	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
+		return "", nil
+	}
+
+	token, err := token.GenerateToken(user.ID)
+	if err != nil {
+		return "", nil
+	}
+
+	return token, nil
+}
+
+func login(c *gin.Context) {
+	var input LoginInput
+
+	if err := c.ShouldBind(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	user := User{
+		Email:    input.Email,
+		Password: input.Password,
+	}
+
+	tokenKey, err := LoginCheck(user.Email, user.Password)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	token.ExtractToken(c)
+
+	c.JSON(http.StatusBadRequest, common.SimpleSuccessResponse(tokenKey))
+}
+
 func main() {
 	connectToMySQL()
 
@@ -353,6 +419,7 @@ func main() {
 	v1 := r.Group("/api/v1")
 	{
 		dishes := v1.Group("/dishes")
+		dishes.Use(middlewares.JwtAuthMiddleware())
 		{
 			dishes.GET("/", getDishes)
 			dishes.GET("/:id", getDish)
@@ -368,6 +435,7 @@ func main() {
 		auth := v1.Group("/auth")
 		{
 			auth.POST("/register", register)
+			auth.POST("/login", login)
 		}
 	}
 
