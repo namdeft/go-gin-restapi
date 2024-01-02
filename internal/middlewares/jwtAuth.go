@@ -1,7 +1,7 @@
 package middlewares
 
 import (
-	"gin-restapi/token"
+	"gin-restapi/internal/token"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -11,7 +11,9 @@ func JwtAuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		err := token.TokenValid(c)
 		if err != nil {
-			c.String(http.StatusUnauthorized, "Unauthorized")
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
 			c.Abort()
 			return
 		}

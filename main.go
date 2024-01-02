@@ -3,9 +3,11 @@ package main
 import (
 	"errors"
 	"fmt"
-	"gin-restapi/common"
-	"gin-restapi/middlewares"
-	"gin-restapi/token"
+	"gin-restapi/internal/common"
+	"gin-restapi/internal/dish/model"
+	"gin-restapi/internal/ingredient/model"
+	"gin-restapi/internal/middlewares"
+	"gin-restapi/internal/token"
 	"log"
 	"net/http"
 	"os"
@@ -23,27 +25,27 @@ import (
 	"gorm.io/gorm/schema"
 )
 
-type DishStatus int
+// type DishStatus int
 
-const (
-	DishStatusUnavailable DishStatus = iota
-	DishStatusAvailable
-	DishStatusDeleted
-)
+// const (
+// 	DishStatusUnavailable DishStatus = iota
+// 	DishStatusAvailable
+// 	DishStatusDeleted
+// )
 
-type Dish struct {
-	ID         int        `json:"id"`
-	Name       string     `json:"name"`
-	Price      string     `json:"price"`
-	Status     DishStatus `json:"status"`
-	Updated_At time.Time  `json:"updated_at"`
-	Created_At time.Time  `json:"created_at"`
-	Deleted_At time.Time  `json:"deleted_at"`
-}
+// type Dish struct {
+// 	ID         int        `json:"id"`
+// 	Name       string     `json:"name"`
+// 	Price      string     `json:"price"`
+// 	Status     DishStatus `json:"status"`
+// 	Updated_At time.Time  `json:"updated_at"`
+// 	Created_At time.Time  `json:"created_at"`
+// 	Deleted_At time.Time  `json:"deleted_at"`
+// }
 
-func (Dish) TableName() string {
-	return "dish"
-}
+// func (Dish) TableName() string {
+// 	return "dish"
+// }
 
 type DishCreation struct {
 	Id    int    `json:"-"`
@@ -65,14 +67,14 @@ func (DishUpdation) TableName() string {
 	return "dish"
 }
 
-type Ingredient struct {
-	ID            string    `json:"id"`
-	Name          string    `json:"name"`
-	Quantity      int       `json:"quantity"`
-	Import_Date   time.Time `json:"import_date"`
-	Export_Date   time.Time `json:"export_date"`
-	Counting_Unit int       `json:"counting_unit"`
-}
+// type Ingredient struct {
+// 	ID            string    `json:"id"`
+// 	Name          string    `json:"name"`
+// 	Quantity      int       `json:"quantity"`
+// 	Import_Date   time.Time `json:"import_date"`
+// 	Export_Date   time.Time `json:"export_date"`
+// 	Counting_Unit int       `json:"counting_unit"`
+// }
 
 var allDishStatuses = [3]string{
 	"unavailable",
@@ -84,10 +86,10 @@ func (dish DishStatus) String() string {
 	return allDishStatuses[dish]
 }
 
-func parseStrToDishStatus(s string) DishStatus {
+func parseStrToDishStatus(s string) model.DishStatus {
 	for i := range allDishStatuses {
 		if allDishStatuses[i] == s {
-			return DishStatus(i)
+			return model.DishStatus(i)
 		}
 	}
 
@@ -144,13 +146,13 @@ func getDishes(c *gin.Context) {
 
 	paging.Process()
 
-	if err := DB.Table(Dish{}.TableName()).Count(&paging.Total); err != nil {
+	if err := DB.Table(model.Dish{}.TableName()).Count(&paging.Total); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err,
 		})
 	}
 
-	var dishes []Dish
+	var dishes []model.Dish
 	if err := DB.
 		Offset((paging.Page - 1) * paging.Limit).
 		Limit(paging.Limit).
@@ -166,7 +168,7 @@ func getDishes(c *gin.Context) {
 }
 
 func getDish(c *gin.Context) {
-	var dish Dish
+	var dish model.Dish
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		log.Fatalf(err.Error())
@@ -231,7 +233,7 @@ func updateDish(c *gin.Context) {
 }
 
 func deleteDish(c *gin.Context) {
-	var dish Dish
+	var dish model.Dish
 
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -259,7 +261,7 @@ func deleteDishSoftly(c *gin.Context) {
 		})
 	}
 
-	if err := DB.Table(Dish{}.TableName()).Where("id = ?", id).Updates(map[string]interface{}{
+	if err := DB.Table(model.Dish{}.TableName()).Where("id = ?", id).Updates(map[string]interface{}{
 		"status":     "deleted",
 		"deleted_at": time.Now(),
 	}).Error; err != nil {
@@ -274,7 +276,7 @@ func deleteDishSoftly(c *gin.Context) {
 }
 
 func getIngredients(c *gin.Context) {
-	var ingredients []Ingredient
+	var ingredients []model.Ingredient
 	if err := DB.Find(&ingredients).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
