@@ -2,10 +2,10 @@ package storage
 
 import "gorm.io/gorm"
 
-type sqlStore struct {
+type SqlStore struct {
 	db *gorm.DB
 }
 
-func SQLStore(db *gorm.DB) *sqlStore {
-	return &sqlStore{db: db}
+func SQLStore(db *gorm.DB) *SqlStore {
+	return &SqlStore{db: db}
 }

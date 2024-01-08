@@ -2,7 +2,8 @@ package user
 
 import (
 	"gin-restapi/internal/database"
-	"gin-restapi/internal/user/transport"
+	"gin-restapi/internal/user/controllers"
+	"gin-restapi/internal/user/storage"
 	"log"
 
 	"github.com/gin-gonic/gin"
@@ -14,10 +15,12 @@ func RouterAuth(r *gin.RouterGroup) {
 		log.Fatalln(err)
 	}
 
+	store := storage.SQLStore(db)
+
 	auth := r.Group("/auth")
 	{
-		auth.POST("/register", transport.Register(db))
-		auth.POST("/login", transport.Login(db))
+		auth.POST("/register", controllers.Register(store))
+		auth.POST("/login", controllers.Login(store))
 	}
 
 }

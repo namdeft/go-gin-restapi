@@ -17,23 +17,3 @@ type Dish struct {
 func (Dish) TableName() string {
 	return "dish"
 }
-
-type DishCreation struct {
-	Id    int    `json:"-"`
-	Name  string `json:"name"`
-	Price string `json:"price"`
-}
-
-func (DishCreation) TableName() string {
-	return "dish"
-}
-
-type DishUpdation struct {
-	Name   string `json:"name"`
-	Price  string `json:"price"`
-	Status string `json:"status"`
-}
-
-func (DishUpdation) TableName() string {
-	return "dish"
-}
