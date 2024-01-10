@@ -6,6 +6,8 @@ services:
       - MYSQL_USER=root
       - MYSQL_PASSWORD=Deft2306!
       - MYSQL_DB=eMenu
+    volumes:
+      - mysql_data:/var/lib/mysql
   api:
     build:
       context: .
@@ -13,6 +15,6 @@ services:
     ports:
       - '8080:8080'
     environment:
-      - DB=root:Deft2306!@tcp(localhost:3306)/eMenu?charset=utf8mb4&parseTime=True&loc=Local
+      - DB=root:Deft2306!@tcp(5432:5432)/eMenu?charset=utf8mb4&parseTime=True&loc=Local
     depends_on:
       - mysql

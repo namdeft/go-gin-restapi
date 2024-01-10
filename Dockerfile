@@ -1,6 +1,8 @@
 FROM golang:1.21-alpine3.19 AS builder
+
 WORKDIR /app
 COPY . .
+RUN go install -mod=mod github.com/githubnemo/CompileDaemon
 RUN go get github.com/gin-gonic/gin
 RUN go build -o main main.go
 
@@ -10,5 +12,4 @@ COPY --from=builder /app/main .
 COPY .env .
 
 EXPOSE 8080
-CMD [ "/app/main" ]
-ENTRYPOINT [ "gin", "run", "main.go"]
+ENTRYPOINT CompileDaemon --build="go build main.go" --command=./main
