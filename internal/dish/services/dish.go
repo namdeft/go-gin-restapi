@@ -5,26 +5,27 @@ import (
 	"gin-restapi/internal/common"
 	"gin-restapi/internal/dish/dto"
 	"gin-restapi/internal/dish/model"
+	"gin-restapi/internal/dish/repository"
 )
 
-type DishStorage interface {
+type DishService interface {
+	CreateNewDish(ctx context.Context, data *dto.DishCreation) error
 	GetDishes(ctx context.Context, paging *common.Paging) ([]model.Dish, error)
 	GetDish(ctx context.Context, id int) (*model.Dish, error)
-	CreateDish(ctx context.Context, data *dto.DishCreation) error
 	UpdateDish(ctx context.Context, id int, data *dto.DishUpdation) error
 	DeleteDish(ctx context.Context, id int) error
 }
 
 type dishService struct {
-	store DishStorage
+	dishRepository repository.DishRepository
 }
 
-func DishService(store DishStorage) *dishService {
-	return &dishService{store: store}
+func NewDishService(dishRepo repository.DishRepository) *dishService {
+	return &dishService{dishRepository: dishRepo}
 }
 
-func (business *dishService) CreateNewDish(ctx context.Context, data *dto.DishCreation) error {
-	if err := business.store.CreateDish(ctx, data); err != nil {
+func (service *dishService) CreateNewDish(ctx context.Context, data *dto.DishCreation) error {
+	if err := service.dishRepository.CreateDish(ctx, data); err != nil {
 		return err
 	}
 
@@ -32,7 +33,7 @@ func (business *dishService) CreateNewDish(ctx context.Context, data *dto.DishCr
 }
 
 func (service *dishService) GetDishes(ctx context.Context, paging *common.Paging) ([]model.Dish, error) {
-	dishes, err := service.store.GetDishes(ctx, paging)
+	dishes, err := service.dishRepository.GetDishes(ctx, paging)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +42,7 @@ func (service *dishService) GetDishes(ctx context.Context, paging *common.Paging
 }
 
 func (service *dishService) GetDish(ctx context.Context, id int) (*model.Dish, error) {
-	dish, err := service.store.GetDish(ctx, id)
+	dish, err := service.dishRepository.GetDish(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +51,7 @@ func (service *dishService) GetDish(ctx context.Context, id int) (*model.Dish, e
 }
 
 func (service *dishService) UpdateDish(ctx context.Context, id int, data *dto.DishUpdation) error {
-	if err := service.store.UpdateDish(ctx, id, data); err != nil {
+	if err := service.dishRepository.UpdateDish(ctx, id, data); err != nil {
 		return err
 	}
 
@@ -58,7 +59,7 @@ func (service *dishService) UpdateDish(ctx context.Context, id int, data *dto.Di
 }
 
 func (service *dishService) DeleteDish(ctx context.Context, id int) error {
-	if err := service.store.DeleteDish(ctx, id); err != nil {
+	if err := service.dishRepository.DeleteDish(ctx, id); err != nil {
 		return err
 	}
 

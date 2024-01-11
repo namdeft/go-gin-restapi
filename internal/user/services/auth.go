@@ -5,23 +5,26 @@ import (
 	"gin-restapi/internal/token"
 	"gin-restapi/internal/user/dto"
 	"gin-restapi/internal/user/model"
+	"gin-restapi/internal/user/repository"
 	"html"
 	"strings"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
-type AuthStorage interface {
-	Login(ctx context.Context, data *dto.LoginInput) (*model.User, error)
+type AuthService interface {
 	Register(ctx context.Context, data *dto.RegisterInput) error
+	Login(ctx context.Context, data *dto.LoginInput) (string, error)
 }
 
 type authService struct {
-	store AuthStorage
+	userRepository repository.UserRepository
 }
 
-func AuthService(store AuthStorage) *authService {
-	return &authService{store: store}
+func NewAuthService(userRepo repository.UserRepository) *authService {
+	return &authService{
+		userRepository: userRepo,
+	}
 }
 
 func VerifyPassword(password, hashedPassword string) error {
@@ -43,7 +46,7 @@ func LoginCheck(data *dto.LoginInput, u *model.User) (string, error) {
 }
 
 func (service *authService) Login(ctx context.Context, data *dto.LoginInput) (string, error) {
-	u, err := service.store.Login(ctx, data)
+	u, err := service.userRepository.Login(ctx, data)
 	if err != nil {
 		return "", err
 	}
@@ -72,7 +75,7 @@ func (service *authService) Register(ctx context.Context, data *dto.RegisterInpu
 		return err
 	}
 
-	if err := service.store.Register(ctx, data); err != nil {
+	if err := service.userRepository.Register(ctx, data); err != nil {
 		return err
 	}
 

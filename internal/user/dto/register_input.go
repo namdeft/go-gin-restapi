@@ -12,19 +12,6 @@ type RegisterInput struct {
 	Password string `json:"password" validate:"required,validatePassword"`
 }
 
-func (RegisterInput) TableName() string {
-	return "user"
-}
-
-type LoginInput struct {
-	Email    string `json:"email" validate:"required"`
-	Password string `json:"password" validate:"required"`
-}
-
-func (LoginInput) TableName() string {
-	return "user"
-}
-
 func validatePassword(password string) bool {
 	return len(password) >= 7 &&
 		contains(password, "[0-9]") &&
@@ -42,13 +29,6 @@ func (input *RegisterInput) ValidateRegisterInput() error {
 	validate.RegisterValidation("validatePassword", func(fl validator.FieldLevel) bool {
 		return validatePassword(fl.Field().String())
 	})
-	err := validate.Struct(input)
-
-	return err
-}
-
-func (input *LoginInput) ValidateLoginInput() error {
-	validate := validator.New()
 	err := validate.Struct(input)
 
 	return err

@@ -5,13 +5,35 @@ import (
 	"gin-restapi/internal/token"
 	"gin-restapi/internal/user/dto"
 	"gin-restapi/internal/user/services"
-	"gin-restapi/internal/user/storage"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 )
 
-func Login(store *storage.SqlStore) gin.HandlerFunc {
+type AuthController interface {
+	Register() gin.HandlerFunc
+	Login() gin.HandlerFunc
+}
+
+type authController struct {
+	authService services.AuthService
+}
+
+func NewAuthController(authService services.AuthService) AuthController {
+	return &authController{
+		authService: authService,
+	}
+}
+
+func ValidateLoginInput(input *dto.LoginInput) error {
+	validate := validator.New()
+	err := validate.Struct(input)
+
+	return err
+}
+
+func (controller *authController) Login() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var input dto.LoginInput
 
@@ -20,7 +42,7 @@ func Login(store *storage.SqlStore) gin.HandlerFunc {
 			return
 		}
 
-		vErr := input.ValidateLoginInput()
+		vErr := ValidateLoginInput(&input)
 		if vErr != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": vErr.Error(),
@@ -29,9 +51,7 @@ func Login(store *storage.SqlStore) gin.HandlerFunc {
 			return
 		}
 
-		biz := services.AuthService(store)
-
-		tokenKey, err := biz.Login(c.Request.Context(), &input)
+		tokenKey, err := controller.authService.Login(c.Request.Context(), &input)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -39,12 +59,12 @@ func Login(store *storage.SqlStore) gin.HandlerFunc {
 
 		token.ExtractToken(c)
 
-		c.JSON(http.StatusAccepted, common.SimpleSuccessResponse(tokenKey))
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(tokenKey))
 
 	}
 }
 
-func Register(store *storage.SqlStore) gin.HandlerFunc {
+func (controller *authController) Register() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var input dto.RegisterInput
 
@@ -62,13 +82,11 @@ func Register(store *storage.SqlStore) gin.HandlerFunc {
 			return
 		}
 
-		biz := services.AuthService(store)
-
-		if err := biz.Register(c.Request.Context(), &input); err != nil {
+		if err := controller.authService.Register(c.Request.Context(), &input); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
-		c.JSON(http.StatusAccepted, common.SimpleSuccessResponse(input))
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(input))
 	}
 }

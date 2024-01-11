@@ -4,15 +4,47 @@ import (
 	"gin-restapi/internal/common"
 	"gin-restapi/internal/dish/dto"
 	"gin-restapi/internal/dish/services"
-	"gin-restapi/internal/dish/storage"
 	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 )
 
-func GetDishes(store *storage.SqlStore) gin.HandlerFunc {
+type DishController interface {
+	GetDishes() gin.HandlerFunc
+	GetDish() gin.HandlerFunc
+	CreateDish() gin.HandlerFunc
+	UpdateDish() gin.HandlerFunc
+	DeleteDish() gin.HandlerFunc
+}
+
+type dishController struct {
+	dishService services.DishService
+}
+
+func NewDishController(dishService services.DishService) DishController {
+	return &dishController{
+		dishService: dishService,
+	}
+}
+
+func ValidateDishCreation(input *dto.DishCreation) error {
+	validate := validator.New()
+	err := validate.Struct(input)
+
+	return err
+}
+
+func ValidateDishUpdation(input *dto.DishUpdation) error {
+	validate := validator.New()
+	err := validate.Struct(input)
+
+	return err
+}
+
+func (controller *dishController) GetDishes() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var paging common.Paging
 
@@ -26,9 +58,7 @@ func GetDishes(store *storage.SqlStore) gin.HandlerFunc {
 
 		paging.Process()
 
-		sv := services.DishService(store)
-
-		dishes, err := sv.GetDishes(c.Request.Context(), &paging)
+		dishes, err := controller.dishService.GetDishes(c.Request.Context(), &paging)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
@@ -37,31 +67,29 @@ func GetDishes(store *storage.SqlStore) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusAccepted, common.SuccessResponse(dishes, paging, nil))
+		c.JSON(http.StatusOK, common.SuccessResponse(dishes, paging, nil))
 	}
 }
 
-func GetDish(store *storage.SqlStore) gin.HandlerFunc {
+func (controller *dishController) GetDish() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
 			log.Fatalf(err.Error())
 		}
 
-		sv := services.DishService(store)
-
-		dish, err := sv.GetDish(c.Request.Context(), id)
+		dish, err := controller.dishService.GetDish(c.Request.Context(), id)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
 		}
 
-		c.JSON(http.StatusAccepted, common.SimpleSuccessResponse(dish))
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(dish))
 	}
 }
 
-func CreateDish(store *storage.SqlStore) gin.HandlerFunc {
+func (controller *dishController) CreateDish() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var input dto.DishCreation
 
@@ -73,7 +101,7 @@ func CreateDish(store *storage.SqlStore) gin.HandlerFunc {
 			return
 		}
 
-		vErr := input.ValidateDishCreation()
+		vErr := ValidateDishCreation(&input)
 		if vErr != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": vErr.Error(),
@@ -82,19 +110,17 @@ func CreateDish(store *storage.SqlStore) gin.HandlerFunc {
 			return
 		}
 
-		sv := services.DishService(store)
-
-		if err := sv.CreateNewDish(c.Request.Context(), &input); err != nil {
+		if err := controller.dishService.CreateNewDish(c.Request.Context(), &input); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
 		}
 
-		c.JSON(http.StatusAccepted, common.SimpleSuccessResponse(input.Id))
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(input.Id))
 	}
 }
 
-func UpdateDish(store *storage.SqlStore) gin.HandlerFunc {
+func (controller *dishController) UpdateDish() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var input dto.DishUpdation
 
@@ -111,7 +137,7 @@ func UpdateDish(store *storage.SqlStore) gin.HandlerFunc {
 			log.Fatalf(err.Error())
 		}
 
-		vErr := input.ValidateDishUpdation()
+		vErr := ValidateDishUpdation(&input)
 		if vErr != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": vErr.Error(),
@@ -120,19 +146,17 @@ func UpdateDish(store *storage.SqlStore) gin.HandlerFunc {
 			return
 		}
 
-		sv := services.DishService(store)
-
-		if err := sv.UpdateDish(c.Request.Context(), id, &input); err != nil {
+		if err := controller.dishService.UpdateDish(c.Request.Context(), id, &input); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
 		}
 
-		c.JSON(http.StatusAccepted, common.SimpleSuccessResponse(true))
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(true))
 	}
 }
 
-func DeleteDish(store *storage.SqlStore) gin.HandlerFunc {
+func (controller *dishController) DeleteDish() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
@@ -141,14 +165,12 @@ func DeleteDish(store *storage.SqlStore) gin.HandlerFunc {
 			})
 		}
 
-		sv := services.DishService(store)
-
-		if err := sv.DeleteDish(c.Request.Context(), id); err != nil {
+		if err := controller.dishService.DeleteDish(c.Request.Context(), id); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
 		}
 
-		c.JSON(http.StatusAccepted, common.SimpleSuccessResponse(true))
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(true))
 	}
 }
