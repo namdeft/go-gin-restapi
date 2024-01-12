@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"regexp"
+	"gin-restapi/internal/user/validation"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -12,22 +12,10 @@ type RegisterInput struct {
 	Password string `json:"password" validate:"required,validatePassword"`
 }
 
-func validatePassword(password string) bool {
-	return len(password) >= 7 &&
-		contains(password, "[0-9]") &&
-		contains(password, "[A-Z]") &&
-		contains(password, `[!@#$%^&*()_+{}|:"<>?~]`)
-}
-
-func contains(s, pattern string) bool {
-	re := regexp.MustCompile(pattern)
-	return re.MatchString(s)
-}
-
 func (input *RegisterInput) ValidateRegisterInput() error {
 	validate := validator.New()
 	validate.RegisterValidation("validatePassword", func(fl validator.FieldLevel) bool {
-		return validatePassword(fl.Field().String())
+		return validation.ValidatePassword(fl.Field().String())
 	})
 	err := validate.Struct(input)
 

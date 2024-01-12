@@ -30,20 +30,6 @@ func NewDishController(dishService services.DishService) DishController {
 	}
 }
 
-func ValidateDishCreation(input *dto.DishCreation) error {
-	validate := validator.New()
-	err := validate.Struct(input)
-
-	return err
-}
-
-func ValidateDishUpdation(input *dto.DishUpdation) error {
-	validate := validator.New()
-	err := validate.Struct(input)
-
-	return err
-}
-
 func (controller *dishController) GetDishes() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var paging common.Paging
@@ -101,7 +87,9 @@ func (controller *dishController) CreateDish() gin.HandlerFunc {
 			return
 		}
 
-		vErr := ValidateDishCreation(&input)
+		validate := validator.New()
+		vErr := validate.Struct(input)
+
 		if vErr != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": vErr.Error(),
@@ -137,7 +125,9 @@ func (controller *dishController) UpdateDish() gin.HandlerFunc {
 			log.Fatalf(err.Error())
 		}
 
-		vErr := ValidateDishUpdation(&input)
+		validate := validator.New()
+		vErr := validate.Struct(input)
+
 		if vErr != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": vErr.Error(),
