@@ -1,10 +1,12 @@
 FROM golang:1.21-alpine3.19 AS builder
 
-RUN mkdir /app
+ENV PROJECT_DIR=/app \
+  GO111MODULE=on \
+  CGO_ENABLED=0
+
 WORKDIR /app
-COPY . /app
-
+RUN mkdir "/build"
+COPY . .
 RUN go get github.com/githubnemo/CompileDaemon
-RUN go get github.com/gin-gonic/gin
-
-ENTRYPOINT ["CompileDaemon", "--build='go build main.go'", "--command=./main"]
+RUN go install github.com/githubnemo/CompileDaemon
+ENTRYPOINT CompileDaemon -build="go build -o /build/app" -command="/build/app"
