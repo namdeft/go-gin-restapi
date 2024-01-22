@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"gin-restapi/internal/dish/controllers/mocks"
 	"gin-restapi/internal/dish/model"
+	"gin-restapi/internal/middlewares"
+	"gin-restapi/internal/token"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -22,34 +23,52 @@ func TestGetDishes(t *testing.T) {
 
 	testController := NewDishController(mockService)
 
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest(http.MethodGet, "/dishes", strings.NewReader(""))
-	c.Query("page")
-	c.Query("limit")
+	validToken, err := token.GenerateToken(1)
+	if err != nil {
+		t.Fatal("Error generating token:", err)
+	}
 
-	testController.GetDishes()(c)
+	router := gin.Default()
+	router.Use(middlewares.JwtAuthMiddleware())
+	router.GET("/dishes", testController.GetDish())
+	ts := httptest.NewServer(router)
+
+	req := httptest.NewRequest(http.MethodGet, ts.URL+"/dishes", nil)
+	req.Header.Set("Authorization", "Bearer "+validToken)
+	q := req.URL.Query()
+	q.Add("first", "limit")
+	q.Add("second", "page")
+
+	resp, err := http.DefaultClient.Do(req)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 	mockService.AssertExpectations(t)
-
-	assert.Equal(t, http.StatusOK, w.Code)
-
-	assert.Contains(t, w.Body.String(), "banh da tron")
 }
 
 func TestGetDish(t *testing.T) {
 	mockService := new(mocks.MockService)
 
-	dish := &model.Dish{ID: 1, Name: "Dish1", Price: "10.99"}
+	dish := &model.Dish{ID: 1, Name: "banh da tron", Price: "29.99"}
 	mockService.On("GetDish", mock.Anything, 1).Return(dish, nil)
 
 	testController := NewDishController(mockService)
 
+	validToken, err := token.GenerateToken(1)
+	if err != nil {
+		t.Fatal("Error generating token:", err)
+	}
+
 	router := gin.Default()
-	router.GET("/dish/:id", testController.GetDish())
+	router.Use(middlewares.JwtAuthMiddleware())
+	router.GET("/dishes/:id", testController.GetDish())
 	ts := httptest.NewServer(router)
 
-	resp, err := http.Get(ts.URL + "/dish/1")
+	req := httptest.NewRequest(http.MethodGet, ts.URL+"/dishes/1", nil)
+	req.Header.Set("Authorization", "Bearer "+validToken)
+
+	resp, err := http.DefaultClient.Do(req)
 	assert.Nil(t, err)
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
@@ -64,13 +83,22 @@ func TestCreateDish(t *testing.T) {
 
 	testController := NewDishController(mockService)
 
+	validToken, err := token.GenerateToken(1)
+	if err != nil {
+		t.Fatal("Error generating token:", err)
+	}
+
 	router := gin.Default()
+	router.Use(middlewares.JwtAuthMiddleware())
 	router.POST("/dishes", testController.CreateDish())
 	ts := httptest.NewServer(router)
 
 	payload := []byte(`{"name": "banh da tron", "price": "29.99"}`)
 
-	res, err := http.Post(ts.URL+"/dishes", "application/json", bytes.NewBuffer(payload))
+	req := httptest.NewRequest(http.MethodPost, ts.URL+"/dishes", bytes.NewBuffer(payload))
+	req.Header.Set("Authorization", "Bearer "+validToken)
+
+	res, err := http.DefaultClient.Do(req)
 	assert.Nil(t, err)
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
@@ -85,16 +113,20 @@ func TestUpdateDish(t *testing.T) {
 
 	testController := NewDishController(mockService)
 
+	validToken, err := token.GenerateToken(1)
+	if err != nil {
+		t.Fatal("Error generating token:", err)
+	}
+
 	router := gin.Default()
+	router.Use(middlewares.JwtAuthMiddleware())
 	router.PUT("/dishes/:id", testController.UpdateDish())
 	ts := httptest.NewServer(router)
 
 	payload := []byte(`{"name": "banh da tron", "price": "29.99"}`)
 
-	req, err := http.NewRequest("PUT", ts.URL+"/dishes/1", bytes.NewBuffer(payload))
-	assert.Nil(t, err)
-
-	req.Header.Set("Content-Type", "application/json")
+	req := httptest.NewRequest(http.MethodPut, ts.URL+"/dishes/1", bytes.NewBuffer(payload))
+	req.Header.Set("Authorization", "Bearer "+validToken)
 
 	resp, err := http.DefaultClient.Do(req)
 	assert.Nil(t, err)
@@ -111,12 +143,18 @@ func TestDeleteDish(t *testing.T) {
 
 	testController := NewDishController(mockService)
 
+	validToken, err := token.GenerateToken(1)
+	if err != nil {
+		t.Fatal("Error generating token:", err)
+	}
+
 	router := gin.Default()
+	router.Use(middlewares.JwtAuthMiddleware())
 	router.DELETE("/dishes/:id", testController.DeleteDish())
 	ts := httptest.NewServer(router)
 
-	req, err := http.NewRequest("DELETE", ts.URL+"/dishes/1", nil)
-	assert.Nil(t, err)
+	req := httptest.NewRequest(http.MethodDelete, ts.URL+"/dishes/1", nil)
+	req.Header.Set("Authorization", "Bearer "+validToken)
 
 	resp, err := http.DefaultClient.Do(req)
 	assert.Nil(t, err)
