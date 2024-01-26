@@ -3,8 +3,8 @@ package controllers
 import (
 	"bytes"
 	"gin-restapi/internal/dish/controllers/mocks"
-	"gin-restapi/internal/dish/model"
 	"gin-restapi/internal/middlewares"
+	"gin-restapi/internal/model"
 	"gin-restapi/internal/token"
 	"net/http"
 	"net/http/httptest"
