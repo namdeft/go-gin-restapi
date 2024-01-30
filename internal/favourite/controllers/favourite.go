@@ -3,7 +3,7 @@ package controllers
 import (
 	"gin-restapi/internal/common"
 	"gin-restapi/internal/favourite/services"
-	"log"
+	"gin-restapi/internal/token"
 	"net/http"
 	"strconv"
 
@@ -28,14 +28,18 @@ func NewFavouriteController(favouriteService services.FavouriteService) Favourit
 
 func (controller favouriteController) AddFavourite() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userId, err := strconv.Atoi(c.Param("user_id"))
+		userId, err := token.GetUserId(c)
 		if err != nil {
-			log.Fatalf(err.Error())
+			c.JSON(http.StatusBadGateway, gin.H{
+				"error": err.Error(),
+			})
 		}
 
 		dishId, err := strconv.Atoi(c.Param("dish_id"))
 		if err != nil {
-			log.Fatalf(err.Error())
+			c.JSON(http.StatusBadGateway, gin.H{
+				"error": err.Error(),
+			})
 		}
 
 		if err := controller.favouriteService.AddFavourite(c.Request.Context(), userId, dishId); err != nil {
@@ -55,9 +59,11 @@ func (controller favouriteController) AddFavourite() gin.HandlerFunc {
 
 func (controller favouriteController) GetFavourites() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userId, err := strconv.Atoi(c.Param("user_id"))
+		userId, err := token.GetUserId(c)
 		if err != nil {
-			log.Fatalf(err.Error())
+			c.JSON(http.StatusBadGateway, gin.H{
+				"error": err.Error(),
+			})
 		}
 
 		dishes, err := controller.favouriteService.GetFavourites(c.Request.Context(), userId)
@@ -73,14 +79,18 @@ func (controller favouriteController) GetFavourites() gin.HandlerFunc {
 
 func (controller favouriteController) DeleteFavourite() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userId, err := strconv.Atoi(c.Param("user_id"))
+		userId, err := token.GetUserId(c)
 		if err != nil {
-			log.Fatalf(err.Error())
+			c.JSON(http.StatusBadGateway, gin.H{
+				"error": err.Error(),
+			})
 		}
 
 		dishId, err := strconv.Atoi(c.Param("dish_id"))
 		if err != nil {
-			log.Fatalf(err.Error())
+			c.JSON(http.StatusBadGateway, gin.H{
+				"error": err.Error(),
+			})
 		}
 
 		if err := controller.favouriteService.DeleteFavourite(c.Request.Context(), userId, dishId); err != nil {

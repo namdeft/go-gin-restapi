@@ -2,8 +2,9 @@ package services
 
 import (
 	"context"
-	"gin-restapi/internal/favourite/model"
+
 	"gin-restapi/internal/favourite/repository"
+	"gin-restapi/internal/model"
 )
 
 type FavouriteService interface {

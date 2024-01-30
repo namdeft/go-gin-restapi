@@ -2,7 +2,9 @@ package repository
 
 import (
 	"context"
-	"gin-restapi/internal/favourite/model"
+
+	"gin-restapi/internal/favourite/validation"
+	"gin-restapi/internal/model"
 
 	"gorm.io/gorm"
 )
@@ -30,19 +32,19 @@ func (s *favouriteConnection) AddFavourite(ctx context.Context, userId int, dish
 	}
 
 	var dish model.Dish
-	if err := s.db.First(&dish, dishId).Error; err != nil {
+	if err := s.db.Preload("Users").First(&dish, dishId).Error; err != nil {
 		return err
 	}
 
-	for _, d := range user.Dishes {
-		if d.ID == dish.ID {
-			return gorm.ErrDuplicatedKey
-		}
+	if err := validation.CheckDuplicateDish(); err != nil {
+		return err
 	}
 
 	user.Dishes = append(user.Dishes, dish)
 
-	s.db.Save(&user)
+	if err := s.db.Save(&user).Error; err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -58,14 +60,12 @@ func (s *favouriteConnection) GetFavourites(ctx context.Context, userId int) ([]
 
 func (s *favouriteConnection) DeleteFavourite(ctx context.Context, userId int, dishId int) error {
 	var user model.User
-	if err := s.db.Preload("Dishes").First(&user, userId).Error; err != nil {
+	if err := s.db.First(&user, userId).Error; err != nil {
 		return err
 	}
 
-	for _, dish := range user.Dishes {
-		if dish.ID == dishId {
-			s.db.Model(&user).Association("Dishes").Delete(&dish)
-		}
+	if err := s.db.Model(&user).Association("Dishes").Delete(&model.Dish{ID: dishId}); err != nil {
+		return err
 	}
 
 	return nil

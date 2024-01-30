@@ -11,8 +11,8 @@ func RouterFavourite(r *gin.RouterGroup, controller controllers.FavouriteControl
 	favourites := r.Group("/favourites")
 	favourites.Use(middlewares.JwtAuthMiddleware())
 	{
-		favourites.GET("/:user_id", controller.GetFavourites())
-		favourites.POST("/:user_id/:dish_id", controller.AddFavourite())
-		favourites.DELETE("/:user_id/:dish_id", controller.DeleteFavourite())
+		favourites.GET("/", controller.GetFavourites())
+		favourites.POST("/:dish_id", controller.AddFavourite())
+		favourites.DELETE("/:dish_id", controller.DeleteFavourite())
 	}
 }
