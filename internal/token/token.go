@@ -27,19 +27,3 @@ func ExtractToken(c *gin.Context) string {
 
 	return ""
 }
-
-// func TokenValid(c *gin.Context) error {
-// 	tokenString := ExtractToken(c)
-// 	_, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-// 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-// 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
-// 		}
-// 		return []byte(os.Getenv("SECRET_KEY")), nil
-// 	})
-
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	return nil
-// }

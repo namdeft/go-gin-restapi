@@ -11,6 +11,7 @@ type FavouriteService interface {
 	AddFavourite(ctx context.Context, userId int, dishId int) error
 	GetFavourites(ctx context.Context, userId int) ([]model.Dish, error)
 	DeleteFavourite(ctx context.Context, userId int, dishId int) error
+	CheckDishExists(dishId int) error
 }
 
 type favouriteService struct {
@@ -42,5 +43,13 @@ func (service *favouriteService) DeleteFavourite(ctx context.Context, userId int
 	if err := service.favouriteRepository.DeleteFavourite(userId, dishId); err != nil {
 		return err
 	}
+	return nil
+}
+
+func (service *favouriteService) CheckDishExists(dishId int) error {
+	if err := service.favouriteRepository.CheckDishExists(dishId); err != nil {
+		return err
+	}
+
 	return nil
 }

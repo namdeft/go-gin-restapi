@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"errors"
 	"gin-restapi/internal/common"
 	"gin-restapi/internal/favourite/services"
 	"gin-restapi/internal/favourite/validation"
@@ -30,20 +31,20 @@ func (controller favouriteController) AddFavourite() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userId, exists := c.Get("userID")
 		if !exists {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": error.Error,
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error": errors.New("User does not exist"),
 			})
 		}
 
 		dishId, err := strconv.Atoi(c.Param("dish_id"))
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
+			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
 		}
 
-		if err := controller.favouriteService.AddFavourite(c.Request.Context(), userId.(int), dishId); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
+		if err := controller.favouriteService.CheckDishExists(dishId); err != nil {
+			c.JSON(http.StatusNotFound, gin.H{
 				"error": err.Error(),
 			})
 
@@ -51,6 +52,14 @@ func (controller favouriteController) AddFavourite() gin.HandlerFunc {
 		}
 
 		if err := validation.CheckDuplicateDish(); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+
+			return
+		}
+
+		if err := controller.favouriteService.AddFavourite(c.Request.Context(), userId.(int), dishId); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": err.Error(),
 			})
@@ -69,7 +78,7 @@ func (controller favouriteController) GetFavourites() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userId, exists := c.Get("userID")
 		if !exists {
-			c.JSON(http.StatusInternalServerError, gin.H{
+			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": error.Error,
 			})
 		}
@@ -89,14 +98,14 @@ func (controller favouriteController) DeleteFavourite() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userId, exists := c.Get("userID")
 		if !exists {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": error.Error,
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error": errors.New("User does not exist"),
 			})
 		}
 
 		dishId, err := strconv.Atoi(c.Param("dish_id"))
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
+			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
 		}

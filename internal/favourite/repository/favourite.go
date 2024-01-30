@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"gin-restapi/internal/favourite/validation"
 	"gin-restapi/internal/model"
 
 	"gorm.io/gorm"
@@ -11,6 +10,7 @@ type FavouriteRepository interface {
 	AddFavourite(userId int, dishId int) error
 	GetFavourites(userId int) ([]model.Dish, error)
 	DeleteFavourite(userId int, dishId int) error
+	CheckDishExists(dishId int) error
 }
 
 type favouriteConnection struct {
@@ -30,13 +30,6 @@ func (s *favouriteConnection) AddFavourite(userId int, dishId int) error {
 	}
 
 	var dish model.Dish
-	if err := s.db.First(&dish, dishId).Error; err != nil {
-		return err
-	}
-
-	if err := validation.CheckDuplicateDish(); err != nil {
-		return err
-	}
 
 	user.Dishes = append(user.Dishes, dish)
 
@@ -63,6 +56,15 @@ func (s *favouriteConnection) DeleteFavourite(userId int, dishId int) error {
 	}
 
 	if err := s.db.Model(&user).Association("Dishes").Delete(&model.Dish{ID: dishId}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *favouriteConnection) CheckDishExists(dishId int) error {
+	var dish model.Dish
+	if err := s.db.First(&dish, dishId).Error; err != nil {
 		return err
 	}
 
