@@ -22,7 +22,7 @@ func NewFavouriteService(favouriteRepo repository.FavouriteRepository) *favourit
 }
 
 func (service *favouriteService) AddFavourite(ctx context.Context, userId int, dishId int) error {
-	if err := service.favouriteRepository.AddFavourite(ctx, userId, dishId); err != nil {
+	if err := service.favouriteRepository.AddFavourite(userId, dishId); err != nil {
 		return err
 	}
 
@@ -30,7 +30,7 @@ func (service *favouriteService) AddFavourite(ctx context.Context, userId int, d
 }
 
 func (service *favouriteService) GetFavourites(ctx context.Context, userId int) ([]model.Dish, error) {
-	dishes, err := service.favouriteRepository.GetFavourites(ctx, userId)
+	dishes, err := service.favouriteRepository.GetFavourites(userId)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +39,7 @@ func (service *favouriteService) GetFavourites(ctx context.Context, userId int) 
 }
 
 func (service *favouriteService) DeleteFavourite(ctx context.Context, userId int, dishId int) error {
-	if err := service.favouriteRepository.DeleteFavourite(ctx, userId, dishId); err != nil {
+	if err := service.favouriteRepository.DeleteFavourite(userId, dishId); err != nil {
 		return err
 	}
 	return nil

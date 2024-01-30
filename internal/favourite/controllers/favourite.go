@@ -3,7 +3,7 @@ package controllers
 import (
 	"gin-restapi/internal/common"
 	"gin-restapi/internal/favourite/services"
-	"gin-restapi/internal/token"
+	"gin-restapi/internal/favourite/validation"
 	"net/http"
 	"strconv"
 
@@ -28,22 +28,30 @@ func NewFavouriteController(favouriteService services.FavouriteService) Favourit
 
 func (controller favouriteController) AddFavourite() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userId, err := token.GetUserId(c)
-		if err != nil {
-			c.JSON(http.StatusBadGateway, gin.H{
-				"error": err.Error(),
+		userId, exists := c.Get("userID")
+		if !exists {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": error.Error,
 			})
 		}
 
 		dishId, err := strconv.Atoi(c.Param("dish_id"))
 		if err != nil {
-			c.JSON(http.StatusBadGateway, gin.H{
+			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": err.Error(),
 			})
 		}
 
-		if err := controller.favouriteService.AddFavourite(c.Request.Context(), userId, dishId); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
+		if err := controller.favouriteService.AddFavourite(c.Request.Context(), userId.(int), dishId); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": err.Error(),
+			})
+
+			return
+		}
+
+		if err := validation.CheckDuplicateDish(); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": err.Error(),
 			})
 
@@ -59,16 +67,16 @@ func (controller favouriteController) AddFavourite() gin.HandlerFunc {
 
 func (controller favouriteController) GetFavourites() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userId, err := token.GetUserId(c)
-		if err != nil {
-			c.JSON(http.StatusBadGateway, gin.H{
-				"error": err.Error(),
+		userId, exists := c.Get("userID")
+		if !exists {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": error.Error,
 			})
 		}
 
-		dishes, err := controller.favouriteService.GetFavourites(c.Request.Context(), userId)
+		dishes, err := controller.favouriteService.GetFavourites(c.Request.Context(), userId.(int))
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
+			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": err.Error(),
 			})
 		}
@@ -79,22 +87,22 @@ func (controller favouriteController) GetFavourites() gin.HandlerFunc {
 
 func (controller favouriteController) DeleteFavourite() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userId, err := token.GetUserId(c)
-		if err != nil {
-			c.JSON(http.StatusBadGateway, gin.H{
-				"error": err.Error(),
+		userId, exists := c.Get("userID")
+		if !exists {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": error.Error,
 			})
 		}
 
 		dishId, err := strconv.Atoi(c.Param("dish_id"))
 		if err != nil {
-			c.JSON(http.StatusBadGateway, gin.H{
+			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": err.Error(),
 			})
 		}
 
-		if err := controller.favouriteService.DeleteFavourite(c.Request.Context(), userId, dishId); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
+		if err := controller.favouriteService.DeleteFavourite(c.Request.Context(), userId.(int), dishId); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": err.Error(),
 			})
 		}

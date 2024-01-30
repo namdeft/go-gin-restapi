@@ -31,7 +31,3 @@ CREATE TABLE dish_category (
 CREATE TABLE user (
     ID int NOT NULL AUTO_INCREMENT, name varchar(255) NOT NULL, email varchar(255) NOT NULL, password varchar(255) NOT NULL, PRIMARY KEY (ID), UNIQUE KEY email (email)
 )
-
-CREATE TABLE favourite (
-    user_id INT NOT NULL, dish_id INT NOT NULL, PRIMARY KEY (user_id, dish_id), FOREIGN KEY (user_id) REFERENCES user (ID) ON DELETE CASCADE, FOREIGN KEY (dish_id) REFERENCES dish (ID) ON DELETE CASCADE
-);

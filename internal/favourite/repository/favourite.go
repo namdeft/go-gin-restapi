@@ -1,8 +1,6 @@
 package repository
 
 import (
-	"context"
-
 	"gin-restapi/internal/favourite/validation"
 	"gin-restapi/internal/model"
 
@@ -10,9 +8,9 @@ import (
 )
 
 type FavouriteRepository interface {
-	AddFavourite(ctx context.Context, userId int, dishId int) error
-	GetFavourites(ctx context.Context, userId int) ([]model.Dish, error)
-	DeleteFavourite(ctx context.Context, userId int, dishId int) error
+	AddFavourite(userId int, dishId int) error
+	GetFavourites(userId int) ([]model.Dish, error)
+	DeleteFavourite(userId int, dishId int) error
 }
 
 type favouriteConnection struct {
@@ -25,14 +23,14 @@ func NewFavouriteRepository(db *gorm.DB) FavouriteRepository {
 	}
 }
 
-func (s *favouriteConnection) AddFavourite(ctx context.Context, userId int, dishId int) error {
+func (s *favouriteConnection) AddFavourite(userId int, dishId int) error {
 	var user model.User
-	if err := s.db.First(&user, userId).Error; err != nil {
+	if err := s.db.Preload("Dishes").First(&user, userId).Error; err != nil {
 		return err
 	}
 
 	var dish model.Dish
-	if err := s.db.Preload("Users").First(&dish, dishId).Error; err != nil {
+	if err := s.db.First(&dish, dishId).Error; err != nil {
 		return err
 	}
 
@@ -49,7 +47,7 @@ func (s *favouriteConnection) AddFavourite(ctx context.Context, userId int, dish
 	return nil
 }
 
-func (s *favouriteConnection) GetFavourites(ctx context.Context, userId int) ([]model.Dish, error) {
+func (s *favouriteConnection) GetFavourites(userId int) ([]model.Dish, error) {
 	var user model.User
 	if err := s.db.Preload("Dishes").First(&user, userId).Error; err != nil {
 		return nil, err
@@ -58,7 +56,7 @@ func (s *favouriteConnection) GetFavourites(ctx context.Context, userId int) ([]
 	return user.Dishes, nil
 }
 
-func (s *favouriteConnection) DeleteFavourite(ctx context.Context, userId int, dishId int) error {
+func (s *favouriteConnection) DeleteFavourite(userId int, dishId int) error {
 	var user model.User
 	if err := s.db.First(&user, userId).Error; err != nil {
 		return err
