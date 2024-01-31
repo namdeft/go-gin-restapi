@@ -36,8 +36,6 @@ func TestAddFavourite(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
 
-	c.Set("user_id", 1)
-
 	mockService.On("CheckDishExists", 2).Return(nil)
 	mockService.On("AddFavourite", mock.Anything, 1, 2).Return(nil)
 
@@ -69,8 +67,6 @@ func TestGetFavouritesController(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
 
-	c.Set("user_id", 1)
-
 	dish := []model.Dish{{ID: 1, Name: "Dish 1", Price: "19.99"}}
 	mockService.On("GetFavourites", mock.Anything, 1).Return(dish, nil)
 
@@ -101,8 +97,6 @@ func TestDeleteFavouriteController(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
-
-	c.Set("user_id", 1)
 
 	mockService.On("DeleteFavourite", mock.Anything, 1, 2).Return(nil)
 
