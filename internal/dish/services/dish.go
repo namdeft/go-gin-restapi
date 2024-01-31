@@ -4,8 +4,8 @@ import (
 	"context"
 	"gin-restapi/internal/common"
 	"gin-restapi/internal/dish/dto"
-	"gin-restapi/internal/dish/model"
 	"gin-restapi/internal/dish/repository"
+	"gin-restapi/internal/model"
 )
 
 type DishService interface {
