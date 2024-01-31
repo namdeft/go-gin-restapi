@@ -4,7 +4,6 @@ import (
 	"errors"
 	"gin-restapi/internal/common"
 	"gin-restapi/internal/favourite/services"
-	"gin-restapi/internal/favourite/validation"
 	"net/http"
 	"strconv"
 
@@ -45,14 +44,6 @@ func (controller favouriteController) AddFavourite() gin.HandlerFunc {
 
 		if err := controller.favouriteService.CheckDishExists(dishId); err != nil {
 			c.JSON(http.StatusNotFound, gin.H{
-				"error": err.Error(),
-			})
-
-			return
-		}
-
-		if err := validation.CheckDuplicateDish(); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
 
