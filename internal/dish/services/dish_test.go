@@ -4,8 +4,8 @@ import (
 	"context"
 	"gin-restapi/internal/common"
 	"gin-restapi/internal/dish/dto"
-	"gin-restapi/internal/dish/model"
 	"gin-restapi/internal/dish/services/mocks"
+	"gin-restapi/internal/model"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
